@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public interface EmployeeService {
     Employee registerNewUser(EmployeeRegister dto);
-    String loginUser(EmployeeLoginReq dto);
+    Employee loginUser(EmployeeLoginReq dto);
     //Employee createEmployee(Employee employee);
     List<Employee> getAllEmployees();
     Optional<Employee> getEmployeeById(Long id);

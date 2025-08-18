@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface SavedJobRepository extends JpaRepository<SavedJob, Long> {
     List<SavedJob> findByEmployee(Employee student);
     Optional<SavedJob> findByEmployeeAndJob(Employee employee, Job job);
+    List<SavedJob> findByEmployeeId(Long employeeId);
 }

@@ -1,7 +1,9 @@
 package com.zplus.jobportal.services.impl;
 
 
+import com.zplus.jobportal.model.Employee;
 import com.zplus.jobportal.model.Job;
+import com.zplus.jobportal.repository.EmployeeRepo;
 import com.zplus.jobportal.repository.JobRepo;
 import com.zplus.jobportal.services.JobServices;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,9 @@ public class JobServiceImpl implements JobServices {
 
     @Autowired
     private JobRepo jobRepository;
+
+    @Autowired
+    private EmployeeRepo employeeRepo;
 
     @Override
     public Job createJob(Job job) {
@@ -43,7 +48,13 @@ public class JobServiceImpl implements JobServices {
     }
 
     @Override
-    public List<Job> getAllJobs() {
+    public List<Job> getAllJobs(Long employeeId) {
+        Employee employee = employeeRepo.findById(employeeId)
+                .orElseThrow(() -> new RuntimeException("Employee not found"));
+
+        if (!employee.isPaymentDone()) {
+            throw new RuntimeException("Access denied. Please renew payment.");
+        }
         return jobRepository.findAll();
     }
 

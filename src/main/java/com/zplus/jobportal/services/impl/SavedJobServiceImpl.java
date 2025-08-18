@@ -8,6 +8,9 @@ import com.zplus.jobportal.repository.JobRepo;
 import com.zplus.jobportal.repository.SavedJobRepository;
 import com.zplus.jobportal.services.SavedJobService;
 import org.springframework.stereotype.Service;
+import org.w3c.dom.stylesheets.LinkStyle;
+
+import java.util.List;
 
 
 @Service
@@ -56,5 +59,14 @@ public class SavedJobServiceImpl implements SavedJobService {
                 .orElseThrow(() -> new RuntimeException("Saved job not found"));
 
         savedJobRepository.delete(savedJob);
+    }
+
+    @Override
+    public List<SavedJob> findSavedJobById(Long employeeId) {
+        List<SavedJob> savedJobs = savedJobRepository.findByEmployeeId(employeeId);
+        if (savedJobs.isEmpty()) {
+            throw new RuntimeException("No saved jobs found for employee ID: " + employeeId);
+        }
+        return savedJobs;
     }
 }

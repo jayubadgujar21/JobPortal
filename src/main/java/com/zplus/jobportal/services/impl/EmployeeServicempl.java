@@ -37,12 +37,12 @@ public class EmployeeServicempl implements EmployeeService {
     }
 
     @Override
-    public String loginUser(EmployeeLoginReq dto) {
+    public Employee loginUser(EmployeeLoginReq dto) {
         Employee employee = employeeRepository.findByEmail(dto.getEmail()).orElseThrow(()-> new RuntimeException("Employee not found with email "+dto.getEmail()));
         if(!employee.getPassword().equals(dto.getPassword())){
             throw new RuntimeException("Incorrect Password");
         }
-        return "Employee Login Successfully";
+        return employee;
     }
 
     @Override
