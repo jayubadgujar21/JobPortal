@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,7 +47,9 @@ public class Employee {
     @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SavedJob> savedJobs = new ArrayList<>();
 
-//    @Column(nullable = false)
-//    private boolean paymentDone = false;
+    @Column(nullable = false)
+    private boolean paymentDone = false;
+
+    private LocalDate paymentExpiryDate;
 
 }

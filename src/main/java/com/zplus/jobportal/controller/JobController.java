@@ -32,9 +32,9 @@ public class JobController {
         return ResponseEntity.ok("Job deleted successfully");
     }
 
-    @GetMapping("/getAllJobs")
-    public ResponseEntity<List<Job>> getAllJobs() {
-        return ResponseEntity.ok(jobService.getAllJobs());
+    @GetMapping("/getAllJobs/{employeeId}")
+    public ResponseEntity<List<Job>> getAllJobs(@PathVariable Long employeeId) {
+        return ResponseEntity.ok(jobService.getAllJobs(employeeId));
     }
 
     @GetMapping("/getJob/{id}")

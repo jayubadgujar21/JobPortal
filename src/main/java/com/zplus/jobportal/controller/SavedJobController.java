@@ -41,6 +41,11 @@ public class SavedJobController {
         return ResponseEntity.ok("Job removed from saved list successfully");
     }
 
+    @GetMapping("/getSavedJobByEmpId/{employeeId}")
+    public ResponseEntity<List<SavedJob>> getSavedJobById(@PathVariable Long id){
+        return ResponseEntity.ok(savedJobService.findSavedJobById(id));
+    }
+
 
 
 }
