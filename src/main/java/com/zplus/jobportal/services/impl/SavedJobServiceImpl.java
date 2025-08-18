@@ -1,6 +1,7 @@
 package com.zplus.jobportal.services.impl;
 
 import com.zplus.jobportal.Exception.ApiError;
+import com.zplus.jobportal.dto.response.SavedJobResponse;
 import com.zplus.jobportal.model.Employee;
 import com.zplus.jobportal.model.Job;
 import com.zplus.jobportal.model.SavedJob;
@@ -61,11 +62,11 @@ public class SavedJobServiceImpl implements SavedJobService {
     }
 
     @Override
-    public List<SavedJob> findSavedJobById(Long employeeId) {
+    public List<Job> findSavedJobById(Long employeeId) {
         List<SavedJob> savedJobs = savedJobRepository.findByEmployeeId(employeeId);
-        if (savedJobs.isEmpty()) {
-            throw new ApiError(404,"No saved jobs found for employee ID: " + employeeId);
-        }
-        return savedJobs;
+
+        return savedJobs.stream()
+                .map(SavedJob::getJob)   // extract Job from each SavedJob
+                .toList();
     }
 }

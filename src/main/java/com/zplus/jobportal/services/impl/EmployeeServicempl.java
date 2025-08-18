@@ -33,6 +33,8 @@ public class EmployeeServicempl implements EmployeeService {
         employee.setAge(dto.getAge());
         employee.setMobileNo(dto.getMobileNo());
         employee.setDesignation(dto.getDesignation());
+        employee.setPaymentDone(false);
+        employee.setPaymentExpiryDate(null);
 
         return employeeRepository.save(employee);
     }
