@@ -1,6 +1,7 @@
 package com.zplus.jobportal.services.impl;
 
 
+import com.zplus.jobportal.Exception.ApiError;
 import com.zplus.jobportal.model.Employee;
 import com.zplus.jobportal.model.Job;
 import com.zplus.jobportal.repository.EmployeeRepo;
@@ -28,7 +29,7 @@ public class JobServiceImpl implements JobServices {
     @Override
     public Job updateJob(Long id, Job job) {
         Job existingJob = jobRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Job not found"));
+                .orElseThrow(() -> new ApiError(404,"Job not found"));
 
         existingJob.setJobTitle(job.getJobTitle());
         existingJob.setCompany(job.getCompany());
@@ -42,7 +43,7 @@ public class JobServiceImpl implements JobServices {
     @Override
     public void deleteJob(Long id) {
         if (!jobRepository.existsById(id)) {
-            throw new RuntimeException("Job not found");
+            throw new ApiError(404,"Job not found");
         }
         jobRepository.deleteById(id);
     }
@@ -50,10 +51,10 @@ public class JobServiceImpl implements JobServices {
     @Override
     public List<Job> getAllJobs(Long employeeId) {
         Employee employee = employeeRepo.findById(employeeId)
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
+                .orElseThrow(() -> new ApiError(404,"Employee not found"));
 
         if (!employee.isPaymentDone()) {
-            throw new RuntimeException("Access denied. Please renew payment.");
+            throw new ApiError(401,"Access denied. Please renew payment.");
         }
         return jobRepository.findAll();
     }
@@ -61,14 +62,14 @@ public class JobServiceImpl implements JobServices {
     @Override
     public Job getJobById(Long id) throws Throwable {
         return jobRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Job not found"));
+                .orElseThrow(() -> new ApiError(404,"Job not found"));
     }
 
     @Override
     public List<Job> findJobByTitle(String jobTitle){
         List<Job> jobs=jobRepository.findByJobTitleContainingIgnoreCase(jobTitle);
         if(jobs.isEmpty()){
-            throw new RuntimeException("No jobs found");
+            throw new ApiError(404,"Jobs not found");
         }
         return jobs;
     }

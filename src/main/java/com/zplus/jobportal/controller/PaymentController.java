@@ -1,6 +1,7 @@
 package com.zplus.jobportal.controller;
 
 
+import com.zplus.jobportal.Exception.ApiError;
 import com.zplus.jobportal.model.Employee;
 import com.zplus.jobportal.repository.EmployeeRepo;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,7 @@ public class PaymentController {
     @PostMapping("/success/{employeeId}")
     public ResponseEntity<String> paymentSuccess(@PathVariable Long employeeId) {
         Employee employee = employeeRepository.findById(employeeId)
-                .orElseThrow(() -> new RuntimeException("Employee not found with ID "+employeeId));
+                .orElseThrow(() -> new ApiError(404,"Employee not found with ID "+employeeId));
 
         employee.setPaymentDone(true);
         employee.setPaymentExpiryDate(LocalDate.now().plusDays(30));

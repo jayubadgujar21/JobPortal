@@ -37,7 +37,7 @@ public class Employee {
     private int age;
 
     @JsonProperty("MobileNo")
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String mobileNo;
 
     @JsonProperty("designation")
@@ -47,9 +47,8 @@ public class Employee {
     @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SavedJob> savedJobs = new ArrayList<>();
 
-    @Column(nullable = false)
     private boolean paymentDone = false;
 
-    private LocalDate paymentExpiryDate;
+    private LocalDate paymentExpiryDate = null;
 
 }

@@ -89,7 +89,7 @@ public class ScrapingController {
     }
     @GetMapping("/python-naukri")
     public ResponseEntity<String> getPythonNaukriJobs(@RequestParam String jobTitle) {
-        String pythonApiUrl = "http://127.0.0.1:8000/scrape/?keyword=" + jobTitle.replace(" ", "%20");
+        String pythonApiUrl = "http://127.0.0.1:10000/scrape/?keyword=" + jobTitle.replace(" ", "%20");
         RestTemplate restTemplate = new RestTemplate();
         String response = restTemplate.getForObject(pythonApiUrl, String.class);
         return ResponseEntity.ok(response);

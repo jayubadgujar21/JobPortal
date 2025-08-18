@@ -1,5 +1,6 @@
 package com.zplus.jobportal.services.impl;
 
+import com.zplus.jobportal.Exception.ApiError;
 import com.zplus.jobportal.dto.request.EmployeeLoginReq;
 import com.zplus.jobportal.dto.request.EmployeeRegister;
 import com.zplus.jobportal.model.Employee;
@@ -22,7 +23,7 @@ public class EmployeeServicempl implements EmployeeService {
     public Employee registerNewUser(EmployeeRegister dto) {
         // Check if email already exists
         if (employeeRepository.findByEmail(dto.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already registered");
+            throw new ApiError(401,"Email already registered");
         }
         // Map DTO to Entity
         Employee employee = new Employee();
@@ -32,15 +33,17 @@ public class EmployeeServicempl implements EmployeeService {
         employee.setAge(dto.getAge());
         employee.setMobileNo(dto.getMobileNo());
         employee.setDesignation(dto.getDesignation());
+        employee.setPaymentDone(false);
+        employee.setPaymentExpiryDate(null);
 
         return employeeRepository.save(employee);
     }
 
     @Override
     public Employee loginUser(EmployeeLoginReq dto) {
-        Employee employee = employeeRepository.findByEmail(dto.getEmail()).orElseThrow(()-> new RuntimeException("Employee not found with email "+dto.getEmail()));
+        Employee employee = employeeRepository.findByEmail(dto.getEmail()).orElseThrow(()-> new ApiError(404,"Employee not found with email "+dto.getEmail()));
         if(!employee.getPassword().equals(dto.getPassword())){
-            throw new RuntimeException("Incorrect Password");
+            throw new ApiError(401,"Incorrect Password");
         }
         return employee;
     }
@@ -67,7 +70,7 @@ public class EmployeeServicempl implements EmployeeService {
                     existing.setDesignation(employee.getDesignation());
                     return employeeRepository.save(existing);
                 })
-                .orElseThrow(() -> new RuntimeException("Employee not found with id " + id));
+                .orElseThrow(() -> new ApiError(404,"Employee not found with id "+ id));
     }
 
     @Override

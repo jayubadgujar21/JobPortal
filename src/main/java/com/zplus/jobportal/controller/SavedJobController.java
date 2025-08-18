@@ -1,6 +1,8 @@
 package com.zplus.jobportal.controller;
 
 
+import com.zplus.jobportal.dto.response.SavedJobResponse;
+import com.zplus.jobportal.model.Job;
 import com.zplus.jobportal.model.SavedJob;
 import com.zplus.jobportal.services.SavedJobService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,8 +44,8 @@ public class SavedJobController {
     }
 
     @GetMapping("/getSavedJobByEmpId/{employeeId}")
-    public ResponseEntity<List<SavedJob>> getSavedJobById(@PathVariable Long id){
-        return ResponseEntity.ok(savedJobService.findSavedJobById(id));
+    public ResponseEntity<List<Job>> getSavedJobById(@PathVariable Long employeeId){
+        return ResponseEntity.ok(savedJobService.findSavedJobById(employeeId));
     }
 
 
