@@ -1,12 +1,15 @@
 package com.zplus.jobportal.controller;
 
 import com.zplus.jobportal.dto.request.EmployeeRegister;
+import com.zplus.jobportal.dto.response.EmployeeDto;
 import com.zplus.jobportal.model.Employee;
 import com.zplus.jobportal.services.EmployeeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
@@ -28,11 +31,12 @@ public class EmployeeController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Employee> getEmployeeById(@PathVariable Long id) {
+    public ResponseEntity<EmployeeDto> getEmployeeById(@PathVariable Long id) {
         return employeeService.getEmployeeById(id)
-                .map(ResponseEntity::ok)
+                .map(employee -> ResponseEntity.ok(employeeService.mapToDto(employee)))
                 .orElse(ResponseEntity.notFound().build());
     }
+
 
     @PutMapping("/update/{id}")
     public ResponseEntity<Employee> updateEmployee(@PathVariable Long id, @RequestBody EmployeeRegister dto) {

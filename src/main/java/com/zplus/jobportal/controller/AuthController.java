@@ -2,6 +2,7 @@ package com.zplus.jobportal.controller;
 
 import com.zplus.jobportal.dto.request.EmployeeLoginReq;
 import com.zplus.jobportal.dto.request.EmployeeRegister;
+import com.zplus.jobportal.dto.response.EmployeeDto;
 import com.zplus.jobportal.model.Employee;
 import com.zplus.jobportal.services.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +27,11 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Employee> login(@RequestBody EmployeeLoginReq dto) {
-        return ResponseEntity.ok(employeeService.loginUser(dto));
+    public ResponseEntity<EmployeeDto> login(@RequestBody EmployeeLoginReq dto) {
+        Employee employee = employeeService.loginUser(dto);
+        EmployeeDto employeeDto = employeeService.mapToDto(employee);
+        return ResponseEntity.ok(employeeDto);
     }
+
+
 } 

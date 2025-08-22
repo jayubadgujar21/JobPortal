@@ -2,6 +2,7 @@ package com.zplus.jobportal.services;
 
 import com.zplus.jobportal.dto.request.EmployeeLoginReq;
 import com.zplus.jobportal.dto.request.EmployeeRegister;
+import com.zplus.jobportal.dto.response.EmployeeDto;
 import com.zplus.jobportal.model.Employee;
 
 import java.util.List;
@@ -16,4 +17,6 @@ public interface EmployeeService {
     Optional<Employee> getEmployeeById(Long id);
     Employee updateEmployee(Long id, EmployeeRegister dto);
     void deleteEmployee(Long id);
+    EmployeeDto mapToDto(Employee employee);
+
 }

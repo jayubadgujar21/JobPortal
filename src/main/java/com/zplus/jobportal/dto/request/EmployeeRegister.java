@@ -10,4 +10,5 @@ public class EmployeeRegister {
         private int age;
         private String mobileNo;
         private String designation;
+
 }
