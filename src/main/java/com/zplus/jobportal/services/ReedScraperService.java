@@ -19,7 +19,6 @@ public class ReedScraperService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // ✅ Your API Key
     private static final String API_KEY = "ce4ea96a-f93e-4f0e-9d79-ee3f9c9857ad";
     private static final String BASE_URL = "https://www.reed.co.uk/api/1.0/search";
 
@@ -30,7 +29,6 @@ public class ReedScraperService {
             String encodedJob = URLEncoder.encode(jobTitle, StandardCharsets.UTF_8);
             String url = BASE_URL + "?keywords=" + encodedJob + "&resultsToTake=50&page=1";
 
-            // --- Basic Auth (username = API_KEY, password = "")
             String auth = API_KEY + ":";
             String base64Auth = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
 
@@ -38,8 +36,7 @@ public class ReedScraperService {
             headers.set("Authorization", "Basic " + base64Auth);
             HttpEntity<String> entity = new HttpEntity<>(headers);
 
-            ResponseEntity<String> response =
-                    restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
 
             JsonNode root = objectMapper.readTree(response.getBody());
             JsonNode results = root.path("results");
@@ -48,15 +45,18 @@ public class ReedScraperService {
                 String title = job.path("jobTitle").asText();
                 String company = job.path("employerName").asText();
                 String location = job.path("locationName").asText();
-                Double salaryMin = job.hasNonNull("minimumSalary") ? job.path("minimumSalary").asDouble() : null;
-                Double salaryMax = job.hasNonNull("maximumSalary") ? job.path("maximumSalary").asDouble() : null;
+                String applyLink = job.hasNonNull("jobUrl") ? job.path("jobUrl").asText() : "Not Specified";
                 String description = job.path("jobDescription").asText();
-                String applyLink = job.path("jobUrl").asText();
-
                 String experience = extractExperience(description);
 
+                // ✅ Correct order: applyLink, experience
                 jobs.add(new JobResponseDTO(
-                        title, company, location,experience, applyLink, "Reed"
+                        title,
+                        company,
+                        location,
+                        applyLink,
+                        experience,
+                        "Reed"
                 ));
             }
 

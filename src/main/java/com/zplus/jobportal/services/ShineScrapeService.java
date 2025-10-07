@@ -1,23 +1,16 @@
 package com.zplus.jobportal.services;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zplus.jobportal.model.Job;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-import org.openqa.selenium.*;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.net.URLEncoder;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -25,152 +18,58 @@ import java.util.Random;
 @Service
 public class ShineScrapeService {
 
-    private static final int MAX_TIMEOUT_SECONDS = 10;
-    private static final int MAX_RETRIES = 2;
+    private static final String API_URL = "https://www.shine.com/api/v2/jobsearch/search?param=";
 
     public List<Job> scrape(String jobTitle) {
-        System.out.println("--- Starting Shine Scraper ---");
         List<Job> jobs = new ArrayList<>();
-
-        // ✅ First try Jsoup (faster, no browser)
         try {
-            System.out.println("Trying direct Jsoup approach for Shine...");
-            jobs = scrapeWithJsoup(jobTitle);
-            if (!jobs.isEmpty()) {
-                jobs = filterActualJobs(jobs);
-                return jobs;
-            }
-        } catch (Exception e) {
-            System.out.println("Jsoup failed: " + e.getMessage() + ". Trying Selenium...");
-        }
+            String encoded = URLEncoder.encode(jobTitle, StandardCharsets.UTF_8);
+            String fullUrl = API_URL + encoded;
 
-        // ✅ Setup ChromeOptions for server Chromium
-        ChromeOptions options = new ChromeOptions();
-        options.setBinary("/snap/bin/chromium"); // snap installed chromium path
-        options.addArguments("--headless");
-        options.addArguments("--disable-gpu");
-        options.addArguments("--no-sandbox");
-        options.addArguments("--disable-dev-shm-usage");
-        options.addArguments("--disable-extensions");
-        options.addArguments("--disable-browser-side-navigation");
-        options.addArguments("--disable-infobars");
-        options.addArguments("--disable-notifications");
-        options.addArguments("--disable-popup-blocking");
-        options.addArguments("--blink-settings=imagesEnabled=false");
-        options.addArguments("--window-size=1920,1080");
-        options.addArguments("--remote-allow-origins=*");
-        options.addArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+            HttpURLConnection conn = (HttpURLConnection) new URL(fullUrl).openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+            conn.setRequestProperty("Accept", "application/json");
+            conn.setConnectTimeout(10000);
+            conn.setReadTimeout(10000);
 
-        WebDriver driver = new ChromeDriver(options);
-        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(MAX_TIMEOUT_SECONDS));
-        driver.manage().timeouts().scriptTimeout(Duration.ofSeconds(MAX_TIMEOUT_SECONDS));
-
-        try {
-            String encodedJobTitle = URLEncoder.encode(jobTitle, StandardCharsets.UTF_8);
-            String url = "https://www.shine.com/job-search/" + encodedJobTitle.replace("+", "-") + "-jobs";
-            System.out.println("Accessing URL: " + url);
-
-            if (!isUrlAccessible(url)) {
-                return createSampleJobs(jobTitle);
-            }
-
-            boolean pageLoaded = false;
-            for (int attempt = 0; attempt < MAX_RETRIES && !pageLoaded; attempt++) {
-                try {
-                    driver.get(url);
-                    pageLoaded = true;
-                } catch (Exception e) {
-                    Thread.sleep(1000);
+            if (conn.getResponseCode() == 200) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                StringBuilder jsonBuilder = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    jsonBuilder.append(line);
                 }
-            }
+                reader.close();
 
-            if (!pageLoaded) return createSampleJobs(jobTitle);
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode root = mapper.readTree(jsonBuilder.toString());
+                JsonNode dataNode = root.path("data").path("jobs");
 
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
-            try {
-                wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("div[class*=jobCard]")));
-            } catch (TimeoutException ignored) {}
+                if (dataNode.isArray()) {
+                    for (JsonNode jobNode : dataNode) {
+                        String title = jobNode.path("jobTitle").asText();
+                        String company = jobNode.path("companyName").asText();
+                        String location = jobNode.path("place").asText();
+                        String experience = jobNode.path("experience").asText();
+                        String link = "https://www.shine.com" + jobNode.path("seoUrl").asText();
 
-            Document doc = Jsoup.parse(driver.getPageSource());
-            Elements jobCards = doc.select("div[class*=jobCard]");
-
-            for (Element job : jobCards) {
-                try {
-                    String title = job.select("p[itemprop=name]").text();
-                    String company = job.select("span[class*=jobCardNova_bigCardTopTitleName]").text();
-                    String loc = job.select("span[class*=jobCardNova_limitsLocation]").text();
-                    String experience = job.select("span[class*=jobCardNova_bigCardCenterListExp]").text();
-                    String applyLink = job.select("meta[itemprop=url]").attr("content");
-
-                    if (!title.isEmpty() && !company.isEmpty()) {
-                        jobs.add(new Job(
-                                title,
-                                company,
-                                loc,
-                                experience,
-                                applyLink,
-                                "Shine"
-                        ));
+                        jobs.add(new Job(title, company, location, experience, link, "Shine"));
                     }
-                } catch (Exception ex) {
-                    System.err.println("Error parsing job card: " + ex.getMessage());
                 }
             }
 
-            if (jobs.isEmpty()) jobs = createSampleJobs(jobTitle);
-            else jobs = filterActualJobs(jobs);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            jobs = createSampleJobs(jobTitle);
-        } finally {
-            driver.quit();
-        }
-
-        return jobs;
-    }
-
-    private List<Job> scrapeWithJsoup(String jobTitle) throws IOException {
-        List<Job> jobs = new ArrayList<>();
-        String encodedJobTitle = URLEncoder.encode(jobTitle, StandardCharsets.UTF_8);
-        String url = "https://www.shine.com/job-search/" + encodedJobTitle.replace("+", "-") + "-jobs";
-
-        Document doc = Jsoup.connect(url)
-                .userAgent("Mozilla/5.0")
-                .timeout(10000)
-                .get();
-
-        Elements jobCards = doc.select("div[class*=jobCardNova_bigCard]");
-
-        for (Element job : jobCards) {
-            String title = job.select("p[itemprop=name]").text();
-            String company = job.select("span[class*=jobCardNova_bigCardTopTitleName]").text();
-            String loc = job.select("span[class*=jobCardNova_limitsLocation]").text();
-            String experience = job.select("span[class*=jobCardNova_bigCardCenterListExp]").text();
-            String applyLink = job.select("meta[itemprop=url]").attr("content");
-
-            if (!title.isEmpty() && !company.isEmpty()) {
-                jobs.add(new Job(
-                        title,
-                        company,
-                        loc,
-                        experience,
-                        applyLink,
-                        "Shine"
-                ));
+            // fallback if empty
+            if (jobs.isEmpty()) {
+                jobs = createSampleJobs(jobTitle);
             }
-        }
-        return jobs;
-    }
 
-    private boolean isUrlAccessible(String urlString) {
-        try {
-            HttpURLConnection connection = (HttpURLConnection) new URL(urlString).openConnection();
-            connection.setRequestMethod("HEAD");
-            return connection.getResponseCode() == HttpURLConnection.HTTP_OK;
         } catch (Exception e) {
-            return false;
+            System.err.println("Error fetching from Shine API: " + e.getMessage());
+            jobs = createSampleJobs(jobTitle);
         }
+
+        return jobs;
     }
 
     private List<Job> createSampleJobs(String jobTitle) {
@@ -191,15 +90,5 @@ public class ShineScrapeService {
             ));
         }
         return sampleJobs;
-    }
-
-    private List<Job> filterActualJobs(List<Job> allJobs) {
-        List<Job> filteredJobs = new ArrayList<>();
-        for (Job job : allJobs) {
-            if (job.getJobTitle().length() > 5 && !job.getCompany().isEmpty()) {
-                filteredJobs.add(job);
-            }
-        }
-        return filteredJobs;
     }
 }

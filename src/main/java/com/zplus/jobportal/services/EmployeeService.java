@@ -19,4 +19,6 @@ public interface EmployeeService {
     void deleteEmployee(Long id);
     EmployeeDto mapToDto(Employee employee);
     public void updatePaymentStatusIfExpired(Employee employee);
+    String forgotPassword(String email);
+    String resetPassword(String email,String resetPassword,String confirmPassword);
 }

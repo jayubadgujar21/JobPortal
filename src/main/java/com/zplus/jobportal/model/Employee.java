@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,6 +50,15 @@ public class Employee {
 
     private boolean paymentDone = false;
 
+    @Column(name = "payment_date")
+    private LocalDate paymentDate;
+
     private LocalDate paymentExpiryDate = null;
+
+    @Column(name = "otp")
+    private String otp;
+
+    @Column(name = "otp_expiry")
+    private LocalDateTime otpExpiry;
 
 }

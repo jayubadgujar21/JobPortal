@@ -7,21 +7,27 @@ import com.zplus.jobportal.dto.response.EmployeeDto;
 import com.zplus.jobportal.model.Employee;
 import com.zplus.jobportal.repository.EmployeeRepo;
 import com.zplus.jobportal.services.EmployeeService;
+import jakarta.mail.MessagingException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.io.UnsupportedEncodingException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 
 @Service
 public class EmployeeServicempl implements EmployeeService {
 
     private final EmployeeRepo employeeRepository;
+    private final MailService mailService;
 
-    public EmployeeServicempl(EmployeeRepo employeeRepository) {
+    public EmployeeServicempl(EmployeeRepo employeeRepository, MailService mailService) {
         this.employeeRepository = employeeRepository;
+        this.mailService = mailService;
     }
 
     @Override
@@ -41,7 +47,17 @@ public class EmployeeServicempl implements EmployeeService {
         employee.setPaymentDone(false);
         employee.setPaymentExpiryDate(null);
 
-        return employeeRepository.save(employee);
+        Employee savedEmployee = employeeRepository.save(employee);
+        // Send registration success email
+        try {
+            String subject = "Registration Successful";
+            String body = "Welcome to our JobPortal, " + savedEmployee.getFullName() + "!";
+            mailService.sendEmail(savedEmployee.getEmail(), subject, body);
+        } catch (Exception e) {
+            // Log the error but don't prevent registration
+            System.err.println("Failed to send email: " + e.getMessage());
+        }
+        return savedEmployee;
     }
 
     @Override
@@ -137,6 +153,35 @@ public class EmployeeServicempl implements EmployeeService {
         dto.setExpired(expired); // Add this field to your DTO
 
         return dto;
+    }
+
+    public String forgotPassword(String email){
+        Employee employee = employeeRepository.findByEmail(email)
+                .orElseThrow(()-> new ApiError(404,"User not found"));
+
+        // Generate OTP (4-digit random)
+        String otp = String.format("%04d", new Random().nextInt(10000));
+
+        // 3. Save OTP + expiry in DB
+        employee.setOtp(otp);
+        employee.setOtpExpiry(LocalDateTime.now().plusMinutes(10)); // valid for 10 minutes
+        employeeRepository.save(employee);
+
+        // 4. Send OTP email
+        mailService.sendEmailToResetPassword(employee.getEmail(), otp);
+        return "OTP sent to your email";
+    }
+
+    public String resetPassword(String email,String newPassword,String confirmPassword){
+
+        if(!newPassword.equals(confirmPassword)){
+            throw new ApiError(400,"Password not match");
+        }
+
+        Employee emp = employeeRepository.findByEmail(email).orElseThrow(()-> new ApiError(404,"User not found"));
+        emp.setPassword(newPassword);
+        employeeRepository.save(emp);
+        return "Password reset successfully..!!";
     }
 
 }

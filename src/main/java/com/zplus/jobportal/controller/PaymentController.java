@@ -26,6 +26,7 @@ public class PaymentController {
                 .orElseThrow(() -> new ApiError(404,"Employee not found with ID "+employeeId));
 
         employee.setPaymentDone(true);
+        employee.setPaymentDate(LocalDate.now());
         employee.setPaymentExpiryDate(LocalDate.now().plusDays(30));
 
         employeeRepository.save(employee);

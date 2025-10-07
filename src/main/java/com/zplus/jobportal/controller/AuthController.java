@@ -1,11 +1,11 @@
 package com.zplus.jobportal.controller;
 
 import com.zplus.jobportal.Exception.ApiError;
-import com.zplus.jobportal.dto.request.EmployeeLoginReq;
-import com.zplus.jobportal.dto.request.EmployeeRegister;
+import com.zplus.jobportal.dto.request.*;
 import com.zplus.jobportal.dto.response.EmployeeDto;
 import com.zplus.jobportal.model.Employee;
 import com.zplus.jobportal.services.EmployeeService;
+import com.zplus.jobportal.services.impl.MailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,10 +19,12 @@ import java.util.Map;
 public class AuthController {
 
     private final EmployeeService employeeService;
+    private final MailService mailService;
 
     @Autowired
-    public AuthController( EmployeeService employeeService) {
+    public AuthController(EmployeeService employeeService, MailService mailService) {
         this.employeeService = employeeService;
+        this.mailService = mailService;
     }
 
     @PostMapping("/register")
@@ -47,6 +49,21 @@ public class AuthController {
     }
 
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotUserPassword(@RequestBody ForgotPasswordRequestDTO dto){
+        String msg = employeeService.forgotPassword(dto.getEmail());
+        return ResponseEntity.ok(msg);
+    }
 
+    @PostMapping("/verify-otp")
+    public ResponseEntity<String> verifyOtp(@RequestBody VerifyOtpRequest request) {
+        String response = mailService.verifyOtp(request.getEmail(), request.getOtp());
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequestDTO dto){
+        return ResponseEntity.ok(employeeService.resetPassword(dto.getEmail(),dto.getNewPassword(),dto.getConfirmPassword()));
+    }
 
 } 
